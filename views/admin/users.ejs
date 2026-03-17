@@ -9,18 +9,18 @@
     <div class="card mb-4">
       <div class="card-header bg-white fw-semibold"><i class="fas fa-user-plus me-2"></i>Add User</div>
       <div class="card-body">
+        <div class="alert alert-info py-2 mb-3">
+          <i class="fas fa-info-circle me-2"></i>
+          Users log in with <strong>Google Sign In</strong>. Just add their name, BIS email, and role — no password needed.
+        </div>
         <form method="POST" action="/admin/users" class="row g-3">
           <div class="col-md-3">
-            <label class="form-label">Username <span class="text-danger">*</span></label>
-            <input type="text" name="username" class="form-control" required>
-          </div>
-          <div class="col-md-3">
             <label class="form-label">Full Name <span class="text-danger">*</span></label>
-            <input type="text" name="name" class="form-control" required>
+            <input type="text" name="name" class="form-control" placeholder="e.g. John Smith" required>
           </div>
-          <div class="col-md-2">
-            <label class="form-label">Password <span class="text-danger">*</span></label>
-            <input type="password" name="password" class="form-control" required>
+          <div class="col-md-4">
+            <label class="form-label">Email Address <span class="text-danger">*</span></label>
+            <input type="email" name="email" class="form-control" placeholder="user@baliis.net" required>
           </div>
           <div class="col-md-2">
             <label class="form-label">Role</label>
@@ -30,8 +30,8 @@
               <option value="admin">Admin</option>
             </select>
           </div>
-          <div class="col-md-2 d-flex align-items-end">
-            <button class="btn btn-primary w-100"><i class="fas fa-plus me-1"></i>Add</button>
+          <div class="col-md-3 d-flex align-items-end">
+            <button class="btn btn-primary w-100"><i class="fas fa-plus me-1"></i>Add User</button>
           </div>
         </form>
       </div>
@@ -40,13 +40,32 @@
     <!-- Users List -->
     <div class="table-container">
       <table class="table table-hover">
-        <thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Google</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
         <tbody>
           <% users.forEach(u => { %>
           <tr>
-            <td class="fw-semibold"><%= u.username %></td>
-            <td><%= u.name %></td>
+            <td class="fw-semibold"><%= u.name %></td>
+            <td class="text-muted small"><%= u.email || '—' %></td>
             <td><span class="badge <%= u.role === 'admin' ? 'bg-danger' : u.role === 'staff' ? 'bg-primary' : 'bg-secondary' %>"><%= u.role %></span></td>
+            <td>
+              <% if (u.google_id) { %>
+                <span class="badge bg-success"><i class="fab fa-google me-1"></i>Linked</span>
+              <% } else if (u.email) { %>
+                <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Pending</span>
+              <% } else { %>
+                <span class="badge bg-secondary">No email</span>
+              <% } %>
+            </td>
             <td><span class="badge <%= u.active ? 'bg-success' : 'bg-secondary' %>"><%= u.active ? 'Active' : 'Inactive' %></span></td>
             <td><%= new Date(u.created_at).toLocaleDateString() %></td>
             <td>
@@ -59,11 +78,19 @@
             <div class="modal-dialog">
               <div class="modal-content">
                 <form method="POST" action="/admin/users/<%= u.id %>">
-                  <div class="modal-header"><h5 class="modal-title">Edit User: <%= u.username %></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                  <div class="modal-header">
+                    <h5 class="modal-title">Edit User: <%= u.name %></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
                   <div class="modal-body">
                     <div class="mb-3">
-                      <label class="form-label">Name</label>
+                      <label class="form-label">Full Name</label>
                       <input type="text" name="name" class="form-control" value="<%= u.name %>" required>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Email Address</label>
+                      <input type="email" name="email" class="form-control" value="<%= u.email || '' %>">
+                      <div class="form-text">Must match their Google account email to allow sign in.</div>
                     </div>
                     <div class="mb-3">
                       <label class="form-label">Role</label>
@@ -74,7 +101,7 @@
                       </select>
                     </div>
                     <div class="mb-3">
-                      <label class="form-label">New Password (leave blank to keep)</label>
+                      <label class="form-label">Password <span class="text-muted small">(optional — leave blank for Google-only users)</span></label>
                       <input type="password" name="password" class="form-control">
                     </div>
                     <div class="form-check">
@@ -84,7 +111,7 @@
                   </div>
                   <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
                   </div>
                 </form>
               </div>
@@ -94,6 +121,7 @@
         </tbody>
       </table>
     </div>
+
   </div>
 </div>
 <%- include('../partials/footer') %>
