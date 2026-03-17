@@ -28,11 +28,16 @@ app.use(session({
 }));
 app.use(flash());
 
+// Passport (Google OAuth)
+const { router: authRouter, passport } = require('./routes/auth');
+app.use(passport.initialize());
+app.use(passport.session());
+
 const { requireAuth, setLocals } = require('./middleware/auth');
 app.use(setLocals);
 
 // Routes
-app.use('/', require('./routes/auth'));
+app.use('/', authRouter);
 
 const db = require('./database/db');
 
