@@ -1,0 +1,22 @@
+<div class="top-bar">
+  <div>
+    <button class="btn btn-sm btn-outline-secondary d-md-none" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+    <span class="fw-bold text-muted ms-2"><%= typeof title !== 'undefined' ? title : 'Dashboard' %></span>
+  </div>
+  <div>
+    <a href="/logout" class="btn btn-sm btn-outline-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+<!-- Toasts -->
+<div class="toast-container">
+  <% if (flash.success && flash.success.length) { %>
+    <% flash.success.forEach(msg => { %>
+    <div class="toast" role="alert"><div class="toast-body bg-success text-white rounded"><i class="fas fa-check-circle me-2"></i><%= msg %></div></div>
+    <% }); %>
+  <% } %>
+  <% if (flash.error && flash.error.length) { %>
+    <% flash.error.forEach(msg => { %>
+    <div class="toast" role="alert"><div class="toast-body bg-danger text-white rounded"><i class="fas fa-exclamation-circle me-2"></i><%= msg %></div></div>
+    <% }); %>
+  <% } %>
+</div>

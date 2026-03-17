@@ -1,0 +1,34 @@
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <h4><i class="fas fa-school"></i> BIS</h4>
+    <small>Inventory Management</small>
+  </div>
+  <div class="sidebar-nav">
+    <a href="/" class="nav-link <%= typeof page !== 'undefined' && page === 'dashboard' ? 'active' : '' %>">
+      <i class="fas fa-tachometer-alt"></i> Dashboard
+    </a>
+    <a href="/assets" class="nav-link <%= typeof page !== 'undefined' && page === 'assets' ? 'active' : '' %>">
+      <i class="fas fa-laptop"></i> Assets
+    </a>
+    <a href="/loans" class="nav-link <%= typeof page !== 'undefined' && page === 'loans' ? 'active' : '' %>">
+      <i class="fas fa-handshake"></i> Loans
+    </a>
+    <a href="/maintenance" class="nav-link <%= typeof page !== 'undefined' && page === 'maintenance' ? 'active' : '' %>">
+      <i class="fas fa-wrench"></i> Maintenance
+    </a>
+    <a href="/reports" class="nav-link <%= typeof page !== 'undefined' && page === 'reports' ? 'active' : '' %>">
+      <i class="fas fa-chart-bar"></i> Reports
+    </a>
+    <% if (user && user.role === 'admin') { %>
+    <a href="/admin/users" class="nav-link <%= typeof page !== 'undefined' && page === 'users' ? 'active' : '' %>">
+      <i class="fas fa-users-cog"></i> Users
+    </a>
+    <% } %>
+  </div>
+  <div style="position:absolute;bottom:1rem;left:0;right:0;padding:0 1.25rem;">
+    <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:0.75rem;font-size:0.8rem;color:rgba(255,255,255,0.5);">
+      <i class="fas fa-user"></i> <%= user ? user.name : '' %>
+      <br><span class="badge bg-light text-dark mt-1"><%= user ? user.role : '' %></span>
+    </div>
+  </div>
+</nav>

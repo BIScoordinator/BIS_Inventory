@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QR Code - <%= asset.asset_code %></title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; text-align: center; padding: 40px; }
+    .qr-label { display: inline-block; border: 2px dashed #ccc; padding: 20px; margin: 10px; }
+    .qr-label img { width: 200px; height: 200px; }
+    .qr-label .code { font-size: 18px; font-weight: bold; margin-top: 10px; }
+    .qr-label .model { font-size: 14px; color: #666; }
+    @media print { .no-print { display: none; } body { padding: 10px; } }
+  </style>
+</head>
+<body>
+  <div class="no-print" style="margin-bottom:20px;">
+    <button onclick="window.print()" style="padding:8px 20px;font-size:16px;cursor:pointer;">Print QR Label</button>
+    <a href="/assets/<%= asset.id %>" style="margin-left:10px;">Back to Asset</a>
+  </div>
+  <% for (let i = 0; i < 4; i++) { %>
+  <div class="qr-label">
+    <img src="<%= qr %>" alt="QR Code">
+    <div class="code"><%= asset.asset_code %></div>
+    <div class="model"><%= asset.brand ? asset.brand + ' ' : '' %><%= asset.model %></div>
+  </div>
+  <% } %>
+</body>
+</html>

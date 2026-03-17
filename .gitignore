@@ -1,0 +1,9 @@
+node_modules/
+*.env
+.env
+database/*.db
+*.log
+.DS_Store
+project.zip
+database/*.db-shm
+database/*.db-wal

@@ -1,0 +1,87 @@
+<%- include('../partials/header', { title: 'Maintenance' }) %>
+<%- include('../partials/sidebar') %>
+<div class="main-content">
+  <%- include('../partials/topbar', { title: 'Maintenance' }) %>
+  <div class="content-area">
+    <% const page = 'maintenance'; %>
+
+    <% if (user && (user.role === 'admin' || user.role === 'staff')) { %>
+    <div class="card mb-4">
+      <div class="card-header bg-white fw-semibold"><i class="fas fa-plus me-2"></i>Log Maintenance</div>
+      <div class="card-body">
+        <form method="POST" action="/maintenance" class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Asset <span class="text-danger">*</span></label>
+            <select name="asset_id" class="form-select" required>
+              <option value="">Select asset...</option>
+              <% assets.forEach(a => { %>
+              <option value="<%= a.id %>"><%= a.asset_code %> - <%= a.brand ? a.brand + ' ' : '' %><%= a.model %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Date <span class="text-danger">*</span></label>
+            <input type="date" name="date" class="form-control" required value="<%= new Date().toISOString().split('T')[0] %>">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Description <span class="text-danger">*</span></label>
+            <input type="text" name="description" class="form-control" required>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Technician</label>
+            <input type="text" name="technician" class="form-control">
+          </div>
+          <div class="col-md-1">
+            <label class="form-label">Cost ($)</label>
+            <input type="number" step="0.01" name="cost" class="form-control">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Outcome</label>
+            <select name="outcome" class="form-select">
+              <option value="Pending">Pending</option>
+              <option value="Repaired">Repaired</option>
+              <option value="Unrepairable">Unrepairable</option>
+              <option value="Replaced">Replaced</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label d-block">&nbsp;</label>
+            <div class="form-check">
+              <input type="checkbox" name="set_repair" value="1" class="form-check-input" id="setRepair">
+              <label class="form-check-label" for="setRepair">Set "In Repair"</label>
+            </div>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-primary"><i class="fas fa-save me-1"></i>Add Log</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <% } %>
+
+    <div class="table-container">
+      <table class="table table-hover data-table">
+        <thead>
+          <tr><th>Date</th><th>Asset</th><th>Model</th><th>Description</th><th>Technician</th><th>Cost</th><th>Outcome</th></tr>
+        </thead>
+        <tbody>
+          <% logs.forEach(m => { %>
+          <tr>
+            <td><%= m.date %></td>
+            <td><a href="/assets/<%= m.asset_id %>"><%= m.asset_code %></a></td>
+            <td><%= m.brand ? m.brand + ' ' : '' %><%= m.model %></td>
+            <td><%= m.description %></td>
+            <td><%= m.technician || '-' %></td>
+            <td><%= m.cost ? '$' + m.cost : '-' %></td>
+            <td>
+              <% const ocls = {'Repaired':'bg-success','Unrepairable':'bg-danger','Pending':'bg-warning','Replaced':'bg-info'}[m.outcome] || 'bg-secondary'; %>
+              <span class="badge <%= ocls %>"><%= m.outcome %></span>
+            </td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer') %>

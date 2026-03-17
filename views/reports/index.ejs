@@ -1,0 +1,122 @@
+<%- include('../partials/header', { title: 'Reports' }) %>
+<%- include('../partials/sidebar') %>
+<div class="main-content">
+  <%- include('../partials/topbar', { title: 'Reports' }) %>
+  <div class="content-area">
+    <% const page = 'reports'; %>
+
+    <!-- Export Options -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body text-center">
+            <i class="fas fa-file-csv fa-3x text-success mb-3"></i>
+            <h5>CSV Export</h5>
+            <p class="text-muted">Export assets to CSV spreadsheet</p>
+            <a href="/reports/export/csv" class="btn btn-success"><i class="fas fa-download me-1"></i>All Assets</a>
+            <div class="mt-2">
+              <% byCategory.forEach(c => { %>
+              <a href="/reports/export/csv?category=<%= encodeURIComponent(c.category) %>" class="btn btn-sm btn-outline-success mt-1"><%= c.category %> (<%= c.count %>)</a>
+              <% }); %>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body text-center">
+            <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+            <h5>PDF Export</h5>
+            <p class="text-muted">Export assets to PDF report</p>
+            <a href="/reports/export/pdf" class="btn btn-danger"><i class="fas fa-download me-1"></i>All Assets</a>
+            <div class="mt-2">
+              <% byStatus.forEach(s => { %>
+              <a href="/reports/export/pdf?status=<%= encodeURIComponent(s.status) %>" class="btn btn-sm btn-outline-danger mt-1"><%= s.status %> (<%= s.count %>)</a>
+              <% }); %>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body text-center">
+            <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+            <h5>Summary</h5>
+            <p class="text-muted">Total: <strong><%= totalAssets %></strong> assets</p>
+            <table class="table table-sm text-start">
+              <% byStatus.forEach(s => { %>
+              <tr><td><%= s.status %></td><td class="fw-bold"><%= s.count %></td><td class="text-muted"><%= (s.count/totalAssets*100).toFixed(1) %>%</td></tr>
+              <% }); %>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overdue Loans -->
+    <div class="card mb-4">
+      <div class="card-header bg-white fw-semibold text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Overdue Loans (<%= overdueLoans.length %>)</div>
+      <div class="card-body">
+        <% if (overdueLoans.length === 0) { %>
+          <p class="text-muted mb-0">No overdue loans</p>
+        <% } else { %>
+        <table class="table table-sm">
+          <thead><tr><th>Asset</th><th>Model</th><th>Borrowed By</th><th>Expected Return</th><th>Days Overdue</th></tr></thead>
+          <tbody>
+            <% overdueLoans.forEach(l => {
+              const days = Math.floor((Date.now() - new Date(l.expected_return).getTime()) / 86400000);
+            %>
+            <tr class="overdue">
+              <td><a href="/assets/<%= l.asset_id %>"><%= l.asset_code %></a></td>
+              <td><%= l.model %></td>
+              <td><%= l.borrowed_by %></td>
+              <td><%= l.expected_return %></td>
+              <td><span class="badge bg-danger"><%= days %> days</span></td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Aging / Lifecycle Report -->
+    <div class="card">
+      <div class="card-header bg-white fw-semibold"><i class="fas fa-hourglass-half me-2"></i>Asset Aging / Lifecycle</div>
+      <div class="card-body">
+        <% if (agingAssets.length === 0) { %>
+          <p class="text-muted mb-0">No assets with purchase dates</p>
+        <% } else { %>
+        <table class="table table-sm data-table">
+          <thead><tr><th>Asset Code</th><th>Category</th><th>Model</th><th>Purchase Date</th><th>Age (years)</th><th>Lifecycle Status</th></tr></thead>
+          <tbody>
+            <% agingAssets.forEach(a => {
+              const age = a.age_years ? parseFloat(a.age_years).toFixed(1) : '-';
+              const isLaptop = ['Laptop'].includes(a.category);
+              const lifecycle = isLaptop ? 5 : 7;
+              const ageNum = parseFloat(a.age_years) || 0;
+              const pct = (ageNum / lifecycle * 100).toFixed(0);
+              const barClass = pct > 100 ? 'bg-danger' : pct > 75 ? 'bg-warning' : 'bg-success';
+            %>
+            <tr>
+              <td><a href="/assets/<%= a.id %>"><%= a.asset_code %></a></td>
+              <td><%= a.category %></td>
+              <td><%= a.brand ? a.brand + ' ' : '' %><%= a.model %></td>
+              <td><%= a.purchase_date %></td>
+              <td><%= age %></td>
+              <td style="min-width:150px;">
+                <div class="progress" style="height:18px;">
+                  <div class="progress-bar <%= barClass %>" style="width:<%= Math.min(pct, 100) %>%"><%= pct %>%</div>
+                </div>
+                <small class="text-muted"><%= ageNum.toFixed(1) %>/<%= lifecycle %> yr</small>
+              </td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer') %>

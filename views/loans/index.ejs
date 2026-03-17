@@ -1,0 +1,105 @@
+<%- include('../partials/header', { title: 'Loans' }) %>
+<%- include('../partials/sidebar') %>
+<div class="main-content">
+  <%- include('../partials/topbar', { title: 'Loans & Checkout' }) %>
+  <div class="content-area">
+    <% const page = 'loans'; %>
+
+    <% if (user && (user.role === 'admin' || user.role === 'staff')) { %>
+    <!-- Checkout Form -->
+    <div class="card mb-4">
+      <div class="card-header bg-white fw-semibold"><i class="fas fa-sign-out-alt me-2"></i>Checkout Asset</div>
+      <div class="card-body">
+        <form method="POST" action="/loans/checkout" class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Asset <span class="text-danger">*</span></label>
+            <select name="asset_id" class="form-select" required>
+              <option value="">Select asset...</option>
+              <% availableAssets.forEach(a => { %>
+              <option value="<%= a.id %>"><%= a.asset_code %> - <%= a.brand ? a.brand + ' ' : '' %><%= a.model %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Borrower <span class="text-danger">*</span></label>
+            <input type="text" name="borrowed_by" class="form-control" required placeholder="Full name">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Expected Return</label>
+            <input type="date" name="expected_return" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Notes</label>
+            <input type="text" name="notes" class="form-control" placeholder="Optional">
+          </div>
+          <div class="col-md-1 d-flex align-items-end">
+            <button class="btn btn-primary w-100"><i class="fas fa-check"></i></button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- Active Loans -->
+    <div class="card mb-4">
+      <div class="card-header bg-white fw-semibold"><i class="fas fa-clock me-2"></i>Active Loans (<%= activeLoans.length %>)</div>
+      <div class="card-body">
+        <% if (activeLoans.length === 0) { %>
+          <p class="text-muted mb-0">No active loans</p>
+        <% } else { %>
+        <table class="table table-hover">
+          <thead><tr><th>Asset</th><th>Model</th><th>Borrowed By</th><th>Date</th><th>Expected Return</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            <% activeLoans.forEach(l => {
+              const overdue = l.expected_return && new Date(l.expected_return) < new Date();
+            %>
+            <tr class="<%= overdue ? 'overdue' : '' %>">
+              <td><a href="/assets/<%= l.asset_id %>"><%= l.asset_code %></a></td>
+              <td><%= l.brand ? l.brand + ' ' : '' %><%= l.model %></td>
+              <td><%= l.borrowed_by %></td>
+              <td><%= l.borrowed_date %></td>
+              <td><%= l.expected_return || '-' %> <% if (overdue) { %><span class="badge bg-danger">OVERDUE</span><% } %></td>
+              <td><span class="badge bg-warning">Active</span></td>
+              <td>
+                <% if (user && (user.role === 'admin' || user.role === 'staff')) { %>
+                <form method="POST" action="/loans/<%= l.id %>/checkin" class="d-inline">
+                  <button class="btn btn-sm btn-success"><i class="fas fa-undo me-1"></i>Check In</button>
+                </form>
+                <% } %>
+              </td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Past Loans -->
+    <div class="card">
+      <div class="card-header bg-white fw-semibold"><i class="fas fa-history me-2"></i>Loan History</div>
+      <div class="card-body">
+        <% if (pastLoans.length === 0) { %>
+          <p class="text-muted mb-0">No past loans</p>
+        <% } else { %>
+        <table class="table table-sm data-table">
+          <thead><tr><th>Asset</th><th>Model</th><th>Borrowed By</th><th>Borrowed</th><th>Returned</th><th>Notes</th></tr></thead>
+          <tbody>
+            <% pastLoans.forEach(l => { %>
+            <tr>
+              <td><a href="/assets/<%= l.asset_id %>"><%= l.asset_code %></a></td>
+              <td><%= l.brand ? l.brand + ' ' : '' %><%= l.model %></td>
+              <td><%= l.borrowed_by %></td>
+              <td><%= l.borrowed_date %></td>
+              <td><%= l.actual_return %></td>
+              <td><%= l.notes || '-' %></td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer') %>

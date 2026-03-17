@@ -1,0 +1,136 @@
+<%- include('partials/header', { title: 'Dashboard' }) %>
+<%- include('partials/sidebar') %>
+<div class="main-content">
+  <%- include('partials/topbar', { title: 'Dashboard' }) %>
+  <div class="content-area">
+    <% const page = 'dashboard'; %>
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="card kpi-card">
+          <div class="card-body text-center">
+            <div class="kpi-value text-primary"><%= total %></div>
+            <div class="kpi-label">Total Assets</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="card kpi-card">
+          <div class="card-body text-center">
+            <div class="kpi-value text-success"><%= active %></div>
+            <div class="kpi-label">Active</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="card kpi-card">
+          <div class="card-body text-center">
+            <div class="kpi-value text-danger"><%= broken %></div>
+            <div class="kpi-label">Broken</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="card kpi-card">
+          <div class="card-body text-center">
+            <div class="kpi-value" style="color:#8e44ad;"><%= onLoan %></div>
+            <div class="kpi-label">On Loan</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="card kpi-card">
+          <div class="card-body text-center">
+            <div class="kpi-value" style="color:#3498db;"><%= inStorage %></div>
+            <div class="kpi-label">In Storage</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="card kpi-card">
+          <div class="card-body text-center">
+            <div class="kpi-value text-warning"><%= inRepair %></div>
+            <div class="kpi-label">In Repair</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-3 mb-4">
+      <div class="col-lg-5">
+        <div class="card">
+          <div class="card-header bg-white fw-semibold"><i class="fas fa-chart-pie me-2"></i>Assets by Category</div>
+          <div class="card-body">
+            <canvas id="categoryChart" height="280"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card">
+          <div class="card-header bg-white fw-semibold"><i class="fas fa-chart-bar me-2"></i>Assets by Status</div>
+          <div class="card-body">
+            <canvas id="statusChart" height="280"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="card">
+      <div class="card-header bg-white fw-semibold"><i class="fas fa-history me-2"></i>Recent Activity</div>
+      <div class="card-body">
+        <% if (recentActivity.length === 0) { %>
+          <p class="text-muted mb-0">No activity yet</p>
+        <% } else { %>
+          <% recentActivity.forEach(a => { %>
+          <div class="activity-item d-flex justify-content-between">
+            <div>
+              <span class="fw-semibold"><%= a.user_name || 'System' %></span>
+              <span class="text-muted"><%= a.action %></span>
+              <% if (a.asset_code) { %><a href="/assets/<%= a.asset_id %>"><%= a.asset_code %></a><% } %>
+              <% if (a.details) { %><span class="text-muted">- <%= a.details %></span><% } %>
+            </div>
+            <small class="text-muted"><%= new Date(a.created_at).toLocaleString() %></small>
+          </div>
+          <% }); %>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+const catColors = ['#1a5276','#2980b9','#3498db','#5dade2','#85c1e9','#a9cce3','#d4e6f1','#1abc9c','#27ae60','#f39c12','#e74c3c','#8e44ad'];
+const catData = <%- JSON.stringify(byCategory) %>;
+new Chart(document.getElementById('categoryChart'), {
+  type: 'doughnut',
+  data: {
+    labels: catData.map(c => c.category),
+    datasets: [{
+      data: catData.map(c => c.count),
+      backgroundColor: catColors.slice(0, catData.length)
+    }]
+  },
+  options: { responsive: true, plugins: { legend: { position: 'right' }}}
+});
+
+const statusColors = { 'Active':'#27ae60','Broken':'#e74c3c','In Repair':'#f39c12','On Loan':'#8e44ad','In Storage':'#3498db','Disposed':'#95a5a6' };
+const statusData = <%- JSON.stringify(byStatus) %>;
+new Chart(document.getElementById('statusChart'), {
+  type: 'bar',
+  data: {
+    labels: statusData.map(s => s.status),
+    datasets: [{
+      label: 'Assets',
+      data: statusData.map(s => s.count),
+      backgroundColor: statusData.map(s => statusColors[s.status] || '#ccc')
+    }]
+  },
+  options: { responsive: true, plugins: { legend: { display: false }}, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }}}}
+});
+</script>
+<%- include('partials/footer') %>

@@ -1,0 +1,137 @@
+<%- include('../partials/header', { title: asset.asset_code }) %>
+<%- include('../partials/sidebar') %>
+<div class="main-content">
+  <%- include('../partials/topbar', { title: asset.asset_code }) %>
+  <div class="content-area">
+    <% const page = 'assets'; %>
+    <%
+      const statusClass = {'Active':'badge-active','Broken':'badge-broken','In Repair':'badge-in-repair','On Loan':'badge-on-loan','In Storage':'badge-in-storage','Disposed':'badge-disposed'}[asset.status] || 'bg-secondary';
+      const ageYears = asset.purchase_date ? ((Date.now() - new Date(asset.purchase_date).getTime()) / (365.25*24*60*60*1000)).toFixed(1) : null;
+    %>
+
+    <div class="mb-3">
+      <a href="/assets" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Back</a>
+      <% if (user && (user.role === 'admin' || user.role === 'staff')) { %>
+      <a href="/assets/<%= asset.id %>/edit" class="btn btn-sm btn-warning"><i class="fas fa-edit me-1"></i>Edit</a>
+      <% } %>
+      <a href="/assets/<%= asset.id %>/qr-print" target="_blank" class="btn btn-sm btn-info"><i class="fas fa-qrcode me-1"></i>Print QR</a>
+    </div>
+
+    <div class="row g-3">
+      <!-- Main Info -->
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span class="fw-semibold"><i class="fas fa-info-circle me-2"></i>Asset Details</span>
+            <span class="badge <%= statusClass %> fs-6"><%= asset.status %></span>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <table class="table table-sm table-borderless">
+                  <tr><td class="text-muted" style="width:130px;">Asset Code</td><td class="fw-bold"><%= asset.asset_code %></td></tr>
+                  <tr><td class="text-muted">Category</td><td><%= asset.category %></td></tr>
+                  <tr><td class="text-muted">Brand</td><td><%= asset.brand || '-' %></td></tr>
+                  <tr><td class="text-muted">Model</td><td><%= asset.model %></td></tr>
+                  <tr><td class="text-muted">Serial Number</td><td><%= asset.serial_number || '-' %></td></tr>
+                  <tr><td class="text-muted">Asset Tag</td><td><%= asset.asset_tag || '-' %></td></tr>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <table class="table table-sm table-borderless">
+                  <tr><td class="text-muted" style="width:130px;">Condition</td><td><%= asset.condition %></td></tr>
+                  <tr><td class="text-muted">Location</td><td><%= asset.location || '-' %></td></tr>
+                  <tr><td class="text-muted">Assigned To</td><td><%= asset.assigned_to || '-' %></td></tr>
+                  <tr><td class="text-muted">Purchase Date</td><td><%= asset.purchase_date || '-' %></td></tr>
+                  <tr><td class="text-muted">Warranty Expiry</td><td><%= asset.warranty_expiry || '-' %></td></tr>
+                  <tr><td class="text-muted">Purchase Price</td><td><%= asset.purchase_price ? '$' + Number(asset.purchase_price).toLocaleString() : '-' %></td></tr>
+                  <% if (ageYears) { %><tr><td class="text-muted">Age</td><td><%= ageYears %> years</td></tr><% } %>
+                </table>
+              </div>
+            </div>
+            <% if (asset.notes) { %>
+            <div class="mt-2"><strong>Notes:</strong><br><%= asset.notes %></div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Loan History -->
+        <div class="card mt-3">
+          <div class="card-header bg-white fw-semibold"><i class="fas fa-handshake me-2"></i>Loan History</div>
+          <div class="card-body">
+            <% if (loans.length === 0) { %>
+              <p class="text-muted mb-0">No loan records</p>
+            <% } else { %>
+            <table class="table table-sm">
+              <thead><tr><th>Borrowed By</th><th>Date</th><th>Expected Return</th><th>Actual Return</th><th>Notes</th></tr></thead>
+              <tbody>
+                <% loans.forEach(l => { %>
+                <tr class="<%= !l.actual_return && l.expected_return && new Date(l.expected_return) < new Date() ? 'overdue' : '' %>">
+                  <td><%= l.borrowed_by %></td>
+                  <td><%= l.borrowed_date %></td>
+                  <td><%= l.expected_return || '-' %></td>
+                  <td><%= l.actual_return || '<span class="badge bg-warning">Active</span>' %></td>
+                  <td><%= l.notes || '-' %></td>
+                </tr>
+                <% }); %>
+              </tbody>
+            </table>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Maintenance History -->
+        <div class="card mt-3">
+          <div class="card-header bg-white fw-semibold"><i class="fas fa-wrench me-2"></i>Maintenance History</div>
+          <div class="card-body">
+            <% if (maintenance.length === 0) { %>
+              <p class="text-muted mb-0">No maintenance records</p>
+            <% } else { %>
+            <table class="table table-sm">
+              <thead><tr><th>Date</th><th>Description</th><th>Technician</th><th>Cost</th><th>Outcome</th></tr></thead>
+              <tbody>
+                <% maintenance.forEach(m => { %>
+                <tr>
+                  <td><%= m.date %></td>
+                  <td><%= m.description %></td>
+                  <td><%= m.technician || '-' %></td>
+                  <td><%= m.cost ? '$' + m.cost : '-' %></td>
+                  <td><span class="badge bg-secondary"><%= m.outcome %></span></td>
+                </tr>
+                <% }); %>
+              </tbody>
+            </table>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar: Photo + Activity -->
+      <div class="col-lg-4">
+        <% if (asset.photo_path) { %>
+        <div class="card mb-3">
+          <img src="<%= asset.photo_path %>" class="card-img-top" alt="Asset photo">
+        </div>
+        <% } %>
+
+        <div class="card">
+          <div class="card-header bg-white fw-semibold"><i class="fas fa-history me-2"></i>Activity Log</div>
+          <div class="card-body">
+            <% if (activity.length === 0) { %>
+              <p class="text-muted mb-0">No activity</p>
+            <% } else { %>
+              <% activity.forEach(a => { %>
+              <div class="activity-item">
+                <div><strong><%= a.user_name || 'System' %></strong> <%= a.action %></div>
+                <% if (a.details) { %><small class="text-muted"><%= a.details %></small><br><% } %>
+                <small class="text-muted"><%= new Date(a.created_at).toLocaleString() %></small>
+              </div>
+              <% }); %>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer') %>

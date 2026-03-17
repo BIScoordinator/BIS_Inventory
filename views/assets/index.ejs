@@ -1,0 +1,138 @@
+<%- include('../partials/header', { title: 'Assets' }) %>
+<%- include('../partials/sidebar') %>
+<div class="main-content">
+  <%- include('../partials/topbar', { title: 'Assets' }) %>
+  <div class="content-area">
+    <% const page = 'assets'; %>
+
+    <!-- Tabs: Active / Archived -->
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item">
+        <a class="nav-link <%= !showArchived ? 'active' : '' %>" href="/assets">
+          <i class="fas fa-laptop me-1"></i> Active Assets
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link <%= showArchived ? 'active' : '' %>" href="/assets?archived=1">
+          <i class="fas fa-archive me-1"></i> Archived
+        </a>
+      </li>
+    </ul>
+
+    <!-- Filters -->
+    <div class="card mb-3">
+      <div class="card-body py-2">
+        <form method="GET" class="row g-2 align-items-end">
+          <% if (showArchived) { %><input type="hidden" name="archived" value="1"><% } %>
+          <div class="col-auto">
+            <select name="category" class="form-select form-select-sm">
+              <option value="">All Categories</option>
+              <% categories.forEach(c => { %>
+              <option value="<%= c %>" <%= filters.category === c ? 'selected' : '' %>><%= c %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-auto">
+            <select name="status" class="form-select form-select-sm">
+              <option value="">All Statuses</option>
+              <% statuses.forEach(s => { %>
+              <option value="<%= s %>" <%= filters.status === s ? 'selected' : '' %>><%= s %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-auto">
+            <select name="location" class="form-select form-select-sm">
+              <option value="">All Locations</option>
+              <% locations.forEach(l => { %>
+              <option value="<%= l %>" <%= filters.location === l ? 'selected' : '' %>><%= l %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-auto">
+            <button class="btn btn-sm btn-primary"><i class="fas fa-filter me-1"></i>Filter</button>
+            <a href="/assets<%= showArchived ? '?archived=1' : '' %>" class="btn btn-sm btn-outline-secondary">Clear</a>
+          </div>
+          <% if (user && (user.role === 'admin' || user.role === 'staff')) { %>
+          <div class="col-auto ms-auto">
+            <a href="/assets/new" class="btn btn-sm btn-success"><i class="fas fa-plus me-1"></i>Add Asset</a>
+          </div>
+          <% } %>
+        </form>
+      </div>
+    </div>
+
+    <!-- Bulk QR form -->
+    <form method="POST" action="/assets/qr-bulk" id="bulkForm">
+    <div class="table-container">
+      <div class="mb-2">
+        <button type="submit" class="btn btn-sm btn-outline-primary no-print"><i class="fas fa-qrcode me-1"></i>Print QR for Selected</button>
+      </div>
+      <table class="table table-hover data-table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAll"></th>
+            <th>Asset Code</th>
+            <th>Category</th>
+            <th>Brand/Model</th>
+            <th>Status</th>
+            <th>Condition</th>
+            <th>Location</th>
+            <th>Assigned To</th>
+            <th>Age</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% assets.forEach(a => {
+            const ageYears = a.purchase_date ? ((Date.now() - new Date(a.purchase_date).getTime()) / (365.25*24*60*60*1000)).toFixed(1) : '-';
+            const statusClass = {'Active':'badge-active','Broken':'badge-broken','In Repair':'badge-in-repair','On Loan':'badge-on-loan','In Storage':'badge-in-storage','Disposed':'badge-disposed'}[a.status] || 'bg-secondary';
+            const condClass = {'Good':'text-success','Fair':'text-warning','Poor':'text-danger'}[a.condition] || '';
+          %>
+          <tr>
+            <td><input type="checkbox" name="ids" value="<%= a.id %>" class="asset-checkbox"></td>
+            <td><a href="/assets/<%= a.id %>" class="fw-semibold"><%= a.asset_code %></a></td>
+            <td><%= a.category %></td>
+            <td><%= a.brand ? a.brand + ' ' : '' %><%= a.model %></td>
+            <td><span class="badge <%= statusClass %>"><%= a.status %></span></td>
+            <td><span class="<%= condClass %>"><%= a.condition %></span></td>
+            <td><%= a.location || '-' %></td>
+            <td><%= a.assigned_to || '-' %></td>
+            <td><%= ageYears %> yr</td>
+            <td class="text-nowrap">
+              <a href="/assets/<%= a.id %>" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
+              <% if (user && (user.role === 'admin' || user.role === 'staff')) { %>
+              <a href="/assets/<%= a.id %>/edit" class="btn btn-sm btn-outline-warning" title="Edit"><i class="fas fa-edit"></i></a>
+              <% } %>
+              <button type="button" class="btn btn-sm btn-outline-info btn-qr" data-id="<%= a.id %>" title="QR"><i class="fas fa-qrcode"></i></button>
+              <% if (user && user.role === 'admin') { %>
+              <form method="POST" action="/assets/<%= a.id %>/archive" class="d-inline">
+                <button class="btn btn-sm btn-outline-secondary" title="<%= a.archived ? 'Unarchive' : 'Archive' %>"><i class="fas fa-<%= a.archived ? 'undo' : 'archive' %>"></i></button>
+              </form>
+              <% } %>
+            </td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    </form>
+
+    <!-- QR Modal -->
+    <div class="modal fade" id="qrModal" tabindex="-1">
+      <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content text-center">
+          <div class="modal-header"><h6 class="modal-title">QR Code</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+          <div class="modal-body">
+            <img id="qrImage" src="" class="img-fluid mb-2" style="max-width:200px;">
+            <div class="fw-bold" id="qrAssetCode"></div>
+            <div class="text-muted" id="qrModel"></div>
+          </div>
+          <div class="modal-footer justify-content-center">
+            <a id="qrPrintLink" href="#" target="_blank" class="btn btn-sm btn-primary"><i class="fas fa-print me-1"></i>Print</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer') %>
